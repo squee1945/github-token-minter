@@ -39,7 +39,7 @@ const (
 )
 
 func Run(ctx context.Context, cfg *Config) error {
-	log.Printf("*** jason starting GitHub Token Minter")
+	log.Printf("*** jason starting GitHub Token Minter path: %q", cfg.RepoConfigPath)
 	appConfigs, err := createAppConfigs(ctx, cfg)
 	if err != nil {
 		return fmt.Errorf("failed to generate app configs: %w", err)
