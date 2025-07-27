@@ -19,6 +19,7 @@ import (
 	"crypto"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"strings"
 
@@ -64,6 +65,7 @@ func NewGitHubSourceSystem(ctx context.Context, configs []*GitHubAppConfig, syst
 
 // MintAccessToken implements SourceSystem.
 func (g *gitHubSourceSystem) MintAccessToken(ctx context.Context, org, repo string, repositories []string, permissions map[string]string) (string, error) {
+	log.Printf("*** gitHubSourceSystem.MintAccessToken (org: %q, repo: %q, repositories: %q, permissions: %v)", org, repo, repositories, permissions)
 	var errs []error
 	var installation *githubauth.AppInstallation
 	var err error
@@ -96,6 +98,7 @@ func (g *gitHubSourceSystem) MintAccessToken(ctx context.Context, org, repo stri
 		Repositories: repositories,
 		Permissions:  permissions,
 	}
+	log.Printf("*** gitHubSourceSystem.MintAccessToken (org: %q, repo: %q) tokenRequest: %+v", org, repo, tokenRequest)
 	accessToken, err := installation.AccessToken(ctx, &tokenRequest)
 	if err != nil {
 		if strings.Contains(err.Error(), "invalid http response status (expected 404 to be 201):") {
