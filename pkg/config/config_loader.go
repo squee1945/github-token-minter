@@ -19,6 +19,7 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
+	"log"
 	"os"
 	"time"
 
@@ -65,6 +66,8 @@ func NewCompilingConfigLoader(env *cel.Env, child ConfigFileLoader) ConfigFileLo
 }
 
 func (l *compilingConfigLoader) Load(ctx context.Context, org, repo string) (*Config, error) {
+	log.Printf("*** compilingConfigLoader.Load (org: %q, repo: %q)", org, repo)
+
 	cfg, err := l.loader.Load(ctx, org, repo)
 	if err != nil {
 		return nil, fmt.Errorf("compiling config loader, sub loader failed to load configuration: %w", err)
@@ -74,6 +77,8 @@ func (l *compilingConfigLoader) Load(ctx context.Context, org, repo string) (*Co
 			return nil, fmt.Errorf("failed to compile CEL expressions in config: %w", err)
 		}
 	}
+	log.Printf("*** compilingConfigLoader.Load (org: %q, repo: %q) cfg: %+v", org, repo, cfg)
+
 	return cfg, nil
 }
 
@@ -82,6 +87,8 @@ func (l *compilingConfigLoader) Source(org, repo string) string {
 }
 
 func (l *cachingConfigFileLoader) Load(ctx context.Context, org, repo string) (*Config, error) {
+	log.Printf("*** cachingConfigFileLoader.Load (org: %q, repo: %q)", org, repo)
+
 	key := fmt.Sprintf("%s/%s", org, repo)
 	// first look for the config object in cache
 	cached, exists := l.cache.Lookup(key)
@@ -93,6 +100,7 @@ func (l *cachingConfigFileLoader) Load(ctx context.Context, org, repo string) (*
 		return nil, fmt.Errorf("failed to load configuration file for [%s / %s]. Error: %w", org, repo, err)
 	}
 	l.cache.Set(key, cfg)
+	log.Printf("*** cachingConfigFileLoader.Load (org: %q, repo: %q) cfg: %+v", org, repo, cfg)
 
 	return cfg, nil
 }
@@ -109,6 +117,7 @@ type localConfigFileLoader struct {
 
 // Load reads the contents of configuration files from the local file system.
 func (l *localConfigFileLoader) Load(ctx context.Context, org, repo string) (*Config, error) {
+	log.Printf("*** localConfigFileLoader.Load (org: %q, repo: %q)", org, repo)
 	name := fmt.Sprintf("%s/%s/%s.yaml", l.configDir, org, repo)
 	data, err := os.ReadFile(name)
 	if err != nil {
@@ -122,6 +131,8 @@ func (l *localConfigFileLoader) Load(ctx context.Context, org, repo string) (*Co
 	if err != nil {
 		return nil, fmt.Errorf("error converting raw config bytes into struct: %w", err)
 	}
+	log.Printf("*** localConfigFileLoader.Load (org: %q, repo: %q) cfg: %+v", org, repo, config)
+
 	return config, nil
 }
 
@@ -140,6 +151,7 @@ type inRepoConfigFileLoader struct {
 // Load is a configFileLoader implementation that reads the configuration file
 // contents from within a GitHub repository.
 func (l *inRepoConfigFileLoader) Load(ctx context.Context, org, repo string) (*Config, error) {
+	log.Printf("*** inRepoConfigFileLoader.Load (org: %q, repo: %q)", org, repo)
 	fileContents, err := l.sourceSystem.RetrieveFileContents(ctx, org, repo, l.configPath, l.ref)
 	if err != nil {
 		return nil, fmt.Errorf("error reading configuration file contents @ %s/%s/%s: %w", org, repo, l.configPath, err)
@@ -152,6 +164,8 @@ func (l *inRepoConfigFileLoader) Load(ctx context.Context, org, repo string) (*C
 	if err != nil {
 		return nil, fmt.Errorf("error converting raw config bytes into struct: %w", err)
 	}
+	log.Printf("*** inRepoConfigFileLoader.Load (org: %q, repo: %q) cfg: %+v", org, repo, config)
+
 	return config, nil
 }
 
@@ -171,10 +185,13 @@ type fixedRepoConfigFileLoader struct {
 // Load is a configFileLoader implementation that retrieves the contents of a
 // configuration file from a specific repository in the org, not from the target repository.
 func (l *fixedRepoConfigFileLoader) Load(ctx context.Context, org, repo string) (*Config, error) {
+	log.Printf("*** fixedRepoConfigFileLoader.Load (org: %q, repo: %q)", org, repo)
 	res, err := l.loader.Load(ctx, org, l.repo)
 	if err != nil {
 		return nil, fmt.Errorf("error reading config file from child loader: %w", err)
 	}
+	log.Printf("*** fixedRepoConfigFileLoader.Load (org: %q, repo: %q) cfg: %+v", org, repo, res)
+
 	return res, nil
 }
 
