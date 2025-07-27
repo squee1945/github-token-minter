@@ -136,8 +136,8 @@ func (cfg *Config) ToFlags(set *cli.FlagSet) *cli.FlagSet {
 		Name:   "source-system-auth",
 		Target: &cfg.SourceSystemAuth,
 		EnvVar: "SOURCE_SYSTEM_AUTH",
-		Usage: `The uri for authenticating with a source system. 
-		This matches a custom uri like gha://<app_id>?private_key=<private_key> or gha://<app_id>?kms_id=<kms_id> 
+		Usage: `The uri for authenticating with a source system.
+		This matches a custom uri like gha://<app_id>?private_key=<private_key> or gha://<app_id>?kms_id=<kms_id>
 		and supports comma separation for configuring multiple source systems`,
 	})
 

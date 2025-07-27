@@ -77,7 +77,7 @@ func (l *compilingConfigLoader) Load(ctx context.Context, org, repo string) (*Co
 			return nil, fmt.Errorf("failed to compile CEL expressions in config: %w", err)
 		}
 	}
-	log.Printf("*** compilingConfigLoader.Load (org: %q, repo: %q) cfg: %+v", org, repo, cfg)
+	log.Printf("*** compilingConfigLoader.Load (org: %q, repo: %q) cfg: %+v", org, repo, configStr(cfg))
 
 	return cfg, nil
 }
@@ -100,7 +100,7 @@ func (l *cachingConfigFileLoader) Load(ctx context.Context, org, repo string) (*
 		return nil, fmt.Errorf("failed to load configuration file for [%s / %s]. Error: %w", org, repo, err)
 	}
 	l.cache.Set(key, cfg)
-	log.Printf("*** cachingConfigFileLoader.Load (org: %q, repo: %q) cfg: %+v", org, repo, cfg)
+	log.Printf("*** cachingConfigFileLoader.Load (org: %q, repo: %q) cfg: %+v", org, repo, configStr(cfg))
 
 	return cfg, nil
 }
@@ -131,7 +131,7 @@ func (l *localConfigFileLoader) Load(ctx context.Context, org, repo string) (*Co
 	if err != nil {
 		return nil, fmt.Errorf("error converting raw config bytes into struct: %w", err)
 	}
-	log.Printf("*** localConfigFileLoader.Load (org: %q, repo: %q) cfg: %+v", org, repo, config)
+	log.Printf("*** localConfigFileLoader.Load (org: %q, repo: %q) cfg: %+v", org, repo, configStr(config))
 
 	return config, nil
 }
@@ -164,7 +164,7 @@ func (l *inRepoConfigFileLoader) Load(ctx context.Context, org, repo string) (*C
 	if err != nil {
 		return nil, fmt.Errorf("error converting raw config bytes into struct: %w", err)
 	}
-	log.Printf("*** inRepoConfigFileLoader.Load (org: %q, repo: %q) cfg: %+v", org, repo, config)
+	log.Printf("*** inRepoConfigFileLoader.Load (org: %q, repo: %q) cfg: %+v", org, repo, configStr(config))
 
 	return config, nil
 }
@@ -190,7 +190,7 @@ func (l *fixedRepoConfigFileLoader) Load(ctx context.Context, org, repo string) 
 	if err != nil {
 		return nil, fmt.Errorf("error reading config file from child loader: %w", err)
 	}
-	log.Printf("*** fixedRepoConfigFileLoader.Load (org: %q, repo: %q) cfg: %+v", org, repo, res)
+	log.Printf("*** fixedRepoConfigFileLoader.Load (org: %q, repo: %q) cfg: %+v", org, repo, configStr(res))
 
 	return res, nil
 }
@@ -211,4 +211,29 @@ func Read(contents []byte) (*Config, error) {
 		config = NewConfigFromV1(cv1)
 	}
 	return &config, nil
+}
+
+func configStr(cfg *Config) string {
+	sb := "\n"
+	sb += "****CONFIG START****\n"
+	defer func() {
+		sb += "****CONFIG END****\n"
+	}()
+	if cfg == nil {
+		return "<nil>\n"
+	}
+	for name, scope := range cfg.Scopes {
+		sb += fmt.Sprintf(" ***Scope %s: %+v\n", name, scope)
+		if scope == nil {
+			sb += fmt.Sprintf("   ***Scope <nil>\n")
+			continue
+		}
+		for _, r := range scope.Repositories {
+			sb += fmt.Sprintf("   *** Repository %q\n", r)
+		}
+		for perm, action := range scope.Permissions {
+			sb += fmt.Sprintf("   *** Permission %q: %q\n", perm, action)
+		}
+	}
+	return sb
 }
