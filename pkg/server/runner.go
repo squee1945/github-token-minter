@@ -18,6 +18,7 @@ import (
 	"context"
 	"crypto"
 	"fmt"
+	"log"
 	"regexp"
 	"strconv"
 	"time"
@@ -38,6 +39,7 @@ const (
 )
 
 func Run(ctx context.Context, cfg *Config) error {
+	log.Printf("jason starting GitHub Token Minter with config: %+v", cfg)
 	appConfigs, err := createAppConfigs(ctx, cfg)
 	if err != nil {
 		return fmt.Errorf("failed to generate app configs: %w", err)
